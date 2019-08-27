@@ -320,19 +320,19 @@ MonoBehaviour:
   m_GameObject: {fileID: 1777136738}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d4edeebd3f37d4a84659df8c7c99f3, type: 3}
+  m_Script: {fileID: 11500000, guid: bc84ca77024084d4bb89399e035323b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   figuresParent: {fileID: 1230695768}
   renderBackgroundField: {fileID: 1765110723}
   fieldWidth: 10
   fieldHeight: 20
-  figureFallPeriod: 0.05
+  figureFallPeriod: 0.25
   figures:
-  - prefab: {fileID: 1764394039019330, guid: 5fe76e8b6260bb74f8be4703deb9ebe4, type: 2}
-    chanceToSelect: 100
   - prefab: {fileID: 1764394039019330, guid: 010d99edf4afb984088c27a6a1527c3b, type: 2}
-    chanceToSelect: 100
+    chanceToSelect: 0
+  - prefab: {fileID: 1764394039019330, guid: 5fe76e8b6260bb74f8be4703deb9ebe4, type: 2}
+    chanceToSelect: 0
 --- !u!4 &1777136740
 Transform:
   m_ObjectHideFlags: 0

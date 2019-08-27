@@ -2,6 +2,14 @@
 using System.Collections;
 using System.Collections.Generic;
 
+public class NullBool
+{
+	public static implicit operator bool (NullBool nb)
+	{
+		return nb != null;
+	}
+}
+
 public static class Extensions
 {
 	public static bool IsTransparent (this Color color)

@@ -2,9 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(SpriteRenderer))]
-public class Figure : MonoBehaviour
+
+public partial class Figure : MonoBehaviour
 {
+
 	public static IEnumerable<Figure> figuresCollection
 	{
 		get { return figures; }
@@ -12,18 +13,21 @@ public class Figure : MonoBehaviour
 	private static readonly List<Figure> figures = new List<Figure>();
 
 	[SerializeField] Sprite sprite;
+	[SerializeField] GameObject segmentPrefab;
 	private Texture2D texture;
 	private Transform trans;
+	private FigureSegmentsControl figureSegmentControl;
 
 	public bool isActive { get; private set; }
 
 	private void Awake ()
 	{
 		trans = GetComponent<Transform> ();
-		GetComponent<SpriteRenderer> ().sprite = sprite;
 		texture = sprite.texture;
 
 		isActive = true;
+
+		figureSegmentControl = new FigureSegmentsControl (this, segmentPrefab);
 
 		figures.Add (this);
 	}
@@ -83,29 +87,33 @@ public class Figure : MonoBehaviour
 		if (CanMoveAtDirection (direction))
 		{
 			trans.position += direction.ToVector3Float ();
+			figureSegmentControl.PlaceSegments ();
 			return true;
 		}
 		return false;
 	}
 
+	private Vector2Int Calc_figureCenter ()
+	{
+		return new Vector2Int (texture.width / 2, texture.height / 2);
+	}
+	private Vector2Int Calc_devisionTo2 ()
+	{
+		return new Vector2Int (texture.width & 1, texture.height & 1);
+	}
+
+
 	protected Vector2Int GetCenterOffset (out Vector2Int devisionTo2)
 	{
-		Vector2Int figureCenterOffset = new Vector2Int (texture.width / 2, texture.height / 2);
-		devisionTo2 = new Vector2Int (texture.width & 1, texture.height & 1);
-		return figureCenterOffset + devisionTo2;
+		return Calc_figureCenter () + (devisionTo2 = Calc_devisionTo2 ());
+	}
+	protected Vector2Int GetCenterOffset ()
+	{
+		return Calc_figureCenter () + Calc_devisionTo2 ();
 	}
 
 	public bool ContainsWorldPoint (Vector2Int point)
 	{
-		Vector2Int devision;
-		Vector2Int centerOffset = GetCenterOffset (out devision);
-
-		point = FromWorldToFigureSpace (point);
-		point += centerOffset;
-
-		if (new Rect (0, 0, texture.width, texture.height).Contains (point))
-			return !texture.GetPixel (point.x, point.y).IsTransparent();
-		
-		return false;
+		return figureSegmentControl.ContainsGlobalPoint (point);
 	}
 }

@@ -13,7 +13,6 @@ namespace Root.Directional
 
 			textureImporter.isReadable = true;
 			textureImporter.filterMode = FilterMode.Point;
-			textureImporter.spritePixelsPerUnit = 1;
 			textureImporter.textureCompression = TextureImporterCompression.Uncompressed;
 			textureImporter.wrapMode = TextureWrapMode.Clamp;
 		}
