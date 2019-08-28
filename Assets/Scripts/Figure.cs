@@ -15,21 +15,27 @@ public partial class Figure : MonoBehaviour
 	[SerializeField] Sprite sprite;
 	[SerializeField] GameObject segmentPrefab;
 	private Texture2D texture;
-	private Transform trans;
-	private FigureSegmentsControl figureSegmentControl;
-
-	public bool isActive { get; private set; }
+	protected Transform trans { get; private set; }
+	public FigureSegmentsControl figureSegmentControl { get; private set; }
 
 	private void Awake ()
 	{
 		trans = GetComponent<Transform> ();
-		texture = sprite.texture;
+		if (sprite)
+			texture = sprite.texture;
 
-		isActive = true;
+		GameField.gameField.OnLineCreated += OnLineCreated;
 
-		figureSegmentControl = new FigureSegmentsControl (this, segmentPrefab);
+		figureSegmentControl = CreateSegmentControl ();
+
+		OnActivate ();
 
 		figures.Add (this);
+	}
+
+	protected virtual FigureSegmentsControl CreateSegmentControl ()
+	{
+		return new FigureSegmentsControl (this, segmentPrefab);
 	}
 
 	private void Start ()
@@ -37,18 +43,20 @@ public partial class Figure : MonoBehaviour
 		StartCoroutine (FallRoutine ());
 	}
 
-	private IEnumerator FallRoutine ()
+	protected virtual IEnumerator FallRoutine ()
 	{
 		WaitForSeconds wait = new WaitForSeconds (GameField.gameField.GetFallPeriod());
 
-		while (CanMoveAtDirection(Vector2Int.down))
+		while (CanMoveAtDirection (Vector2Int.down))
 		{
+
 			Move (Vector2Int.down);
 
 			yield return wait;
 		}
 
-		isActive = false;
+		OnDisactivate ();
+		yield return null;
 	}
 
 	public Vector2Int FromFigureToWorldSpace (Vector2Int figure)
@@ -60,26 +68,41 @@ public partial class Figure : MonoBehaviour
 		return world - trans.position.ToVector2IntByFloor ();
 	}
 
+	protected virtual void OnActivate ()
+	{
+		
+	}
+
+
+	protected virtual void OnDisactivate ()
+	{
+		GlobalFigure.GetGlobalFigure ().Concat (this);
+		Destroy (gameObject);
+	}
+
+	protected virtual void OnLineCreated (params int[] levels)
+	{
+		foreach (var i in levels) {
+			figureSegmentControl.RemoveLine (i);
+		}
+	}
+
 	protected bool CanMoveAtDirection (Vector2Int direction) 
 	{
-		Vector2Int devisionTo2;
-		Vector2Int figureCenterOffset = GetCenterOffset (out devisionTo2);
+		var segments = figureSegmentControl.GetSegmentsArray ();
 
-		for (int x = -figureCenterOffset.x - devisionTo2.x; x < figureCenterOffset.x; x++) 
-		{
-			for (int y = -figureCenterOffset.y - devisionTo2.y; y < figureCenterOffset.y; y++) 
-			{
-				
-				Vector2Int texturePos = new Vector2Int (x, y) + figureCenterOffset;
-				if (texture.GetPixel (texturePos.x, texturePos.y).IsTransparent ())
-					continue;
-					
-				if (!GameField.gameField.IsPointValid (FromFigureToWorldSpace (new Vector2Int (x, y) + direction), this))
-					return false;
-			}
+		foreach (var segment in segments) {
+			if (!segment)
+				continue;
+			if (!GameField.gameField.IsPointValid (segment.position.ToVector2IntByFloor () + direction, this))
+				return false;
 		}
-		
 		return true;
+	}
+
+	protected virtual void OnDestroy ()
+	{
+		figures.Remove (this);
 	}
 
 	public bool Move (Vector2Int direction)
@@ -95,10 +118,14 @@ public partial class Figure : MonoBehaviour
 
 	private Vector2Int Calc_figureCenter ()
 	{
+		if (!texture)
+			return Vector2Int.zero;
 		return new Vector2Int (texture.width / 2, texture.height / 2);
 	}
 	private Vector2Int Calc_devisionTo2 ()
 	{
+		if (!texture)
+			return Vector2Int.zero;
 		return new Vector2Int (texture.width & 1, texture.height & 1);
 	}
 

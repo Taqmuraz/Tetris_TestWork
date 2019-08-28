@@ -5,6 +5,9 @@ using UnityEngine;
 
 public class GameField : MonoBehaviour
 {
+	public event LineCreatedEventHandler OnLineCreated;
+	public delegate void LineCreatedEventHandler (params int[] lineLevels);
+
 	[SerializeField] Transform figuresParent;
 	[SerializeField] Transform renderBackgroundField;
 	[SerializeField] int fieldWidth = 10;
@@ -12,7 +15,7 @@ public class GameField : MonoBehaviour
 	[SerializeField] float figureFallPeriod = 1f;
 	[SerializeField] FigureEditorField[] figures;
 
-	Transform trans;
+	public Transform trans { get; private set; }
 
 	public static GameField gameField { get; private set; }
 
@@ -58,10 +61,12 @@ public class GameField : MonoBehaviour
 
 			yield return null;
 
+			CheckLineVirt ();
+
 			figure = SpawnFigure (figures.GetRandomArrayElement().GetPrefab());
 
 
-			while (figure.isActive) {
+			while (figure != null) {
 				FigureUserControl (figure);
 				yield return null;
 			}
@@ -100,6 +105,13 @@ public class GameField : MonoBehaviour
 
 		return !ContainsAnyFigure (point, ignoreFigure);
 	}
+
+
+	public Transform GetFiguresParent ()
+	{
+		return figuresParent;
+	}
+
 	protected bool ContainsAnyFigure (Vector2Int point, Figure ignoreFigure)
 	{
 		foreach (var figure in Figure.figuresCollection)
@@ -117,5 +129,27 @@ public class GameField : MonoBehaviour
 		GameObject instance = Instantiate (prefab, figuresParent);
 		instance.transform.localPosition = new Vector3 (fieldWidth * 0.5f, fieldHeight);
 		return instance.GetComponent<Figure> ();
+	}
+	protected virtual void CheckLineVirt ()
+	{
+		if (OnLineCreated == null)
+			return;
+
+		for (int y = 0; y < fieldHeight; y++) {
+			if (CheckLineCreated (y))
+			{
+				OnLineCreated (y);
+			}
+		}
+	}
+	protected bool CheckLineCreated (int level)
+	{
+		for (int x = 0; x < fieldWidth; x++) {
+			if (!ContainsAnyFigure (new Vector2Int (x, level), null))
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 }
